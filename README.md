@@ -32,3 +32,33 @@ effect(() => console.log(get(uppercased)));
 set(name, "signal");
 // logs "SIGNAL"
 ```
+
+Transactions rollback updates after errors.
+
+```ts
+let name = signal("dan");
+
+transact(() => {
+  set(name, "signals");
+  get(name); // "signals"
+  throw new Error("uh oh");
+});
+
+get(name); // "dan"
+```
+
+Transactions can also rollback manually.
+
+```ts
+let name = signal("dan");
+
+transact(rollback => {
+  set(name, "signals");
+  get(name); // "signals"
+  return rollback();
+});
+
+get(name); // "dan"
+```
+
+Transactions defer effects until after they have run successfully.
