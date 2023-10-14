@@ -1,5 +1,12 @@
 {
   "name": "@danprince/signals",
+  "type": "module",
+  "exports": "./dist/signals.js",
+  "types": "./dist/signals.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json"
+  },
   "dependencies": {},
   "devDependencies": {
     "bun-types": "^1.0.6",
