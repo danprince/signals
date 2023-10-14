@@ -1,5 +1,5 @@
 import { expect, test, mock } from "bun:test";
-import { computed, effect, get, set, signal } from "./signals";
+import { computed, effect, get, set, signal, transact } from "./signals";
 
 test("can read from signals", () => {
   let count = signal(0);
@@ -38,4 +38,45 @@ test("complex dependencies", () => {
     return `${get(uppercased)} ${get(reversed)} ${get(length)}`;
   });
   expect(get(together)).toBe(`DAN NAD 3`);
+});
+
+test("transactions with manual rollback", () => {
+  let name = signal("dan");
+  let upper = computed(() => get(name).toUpperCase());
+
+  transact(rollback => {
+    set(name, "foo");
+    rollback();
+  });
+
+  expect(get(name)).toBe("dan");
+  expect(get(upper)).toBe("DAN");
+});
+
+test("transactions with automatic rollbacks", () => {
+  let name = signal("dan");
+  let upper = computed(() => get(name).toUpperCase());
+
+  expect(() => transact(() => {
+    set(name, "foo");
+    set(name, "bloo");
+    throw new Error("Something went wrong")
+  })).toThrow();
+
+  expect(get(name)).toBe("dan");
+  expect(get(upper)).toBe("DAN");
+});
+
+test("transactions defer effects", () => {
+  let name = signal("dan");
+  let fun = mock(_ => {});
+  effect(() => fun(get(name)));
+  expect(fun).toHaveBeenCalledTimes(1);
+
+  transact(() => {
+    set(name, "foo");
+    set(name, "foo");
+    expect(fun).toHaveBeenCalledTimes(1);
+  });
+  expect(fun).toHaveBeenCalledTimes(3);
 });
